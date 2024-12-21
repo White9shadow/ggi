@@ -25,6 +25,12 @@ jobs:
         Invoke-WebRequest -Uri "https://telegram.org/dl/desktop/win64" -OutFile "$env:USERPROFILE\Desktop\TelegramSetup.exe"
         
         Start-Sleep -Seconds 5  # Give some time for the downloads to complete
+        
+        # Install Playit Agent
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "/S" -NoNewWindow -Wait
+
+        # Install Telegram Desktop
+        Start-Process -FilePath "$env:USERPROFILE\Desktop\TelegramSetup.exe" -ArgumentList "/S" -NoNewWindow -Wait
 
     - name: Enable Remote Desktop (RDP) and Sound
       run: |
