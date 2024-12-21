@@ -39,6 +39,11 @@ jobs:
       with:
         name: playit-data
       continue-on-error: true  # Allow the workflow to continue even if no artifact exists
+    - name: Save Data as Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: playit-data
+        path: $env:USERPROFILE\.playit  # Replace with the directory where Playit stores its data
 
     - name: Start Playit and Set Up RDP Tunnel
       env:
@@ -47,11 +52,6 @@ jobs:
         Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
         Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
 
-    - name: Save Data as Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: playit-data
-        path: $env:USERPROFILE\.playit  # Replace with the directory where Playit stores its data
 
     # Prevent workflow from stopping
     - name: Keep the GitHub Action Runner Alive
