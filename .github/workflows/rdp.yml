@@ -1,3 +1,4 @@
+
 name: Starting By revWhiteShadow
 
 on:
@@ -15,6 +16,11 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y xrdp pulseaudio
+
+    - name: Set RDP Password
+      run: |
+        # Set password for the default user (ubuntu)
+        echo "ubuntu:revWS123!" | sudo chpasswd
 
     - name: Enable Remote Desktop (RDP)
       run: |
