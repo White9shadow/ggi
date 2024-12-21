@@ -1,4 +1,3 @@
-
 name: Starting By revWhiteShadow
 
 on:
@@ -12,31 +11,32 @@ jobs:
     - name: Check out the repository
       uses: actions/checkout@v2
 
-    - name: Install Required Packages
+    - name: Download and Install Resources
+      run: |
+        curl -L "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-x86_64-signed" -o ~/playit
+        chmod +x ~/playit
+        sleep 5  # Give some time for the download to complete
+
+    - name: Enable Remote Desktop (RDP) and Sound
       run: |
         sudo apt update
         sudo apt install -y xrdp pulseaudio
+        sudo systemctl enable --now xrdp
+        sudo systemctl enable --now pulseaudio
 
     - name: Set RDP Password
       run: |
-        # Set password for the default user (ubuntu)
-        echo "ubuntu:revWS123!" | sudo chpasswd
-
-    - name: Enable Remote Desktop (RDP)
-      run: |
-        sudo systemctl enable xrdp
-        sudo systemctl start xrdp
+        sudo useradd -m runneradmin
+        echo "runneradmin:revWS123!" | sudo chpasswd
 
     - name: Set Up RDP Tunnel
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
-        # Assuming playit is compatible with Ubuntu
-        wget https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-x86_64-signed.tar.gz
-        tar -xvzf playit-linux-x86_64-signed.tar.gz
-        ./playit --secret $env:PLAYIT_AUTH_KEY &
+        ~/playit --secret $PLAYIT_AUTH_KEY &
+        sleep 5  # Allow some time for the tunnel to start
 
     # Prevent workflow from stopping
     - name: Keep the GitHub Action Runner Alive
       run: |
-        sleep 11800
+        sleep 11800  # Adjust the duration based on your needs
