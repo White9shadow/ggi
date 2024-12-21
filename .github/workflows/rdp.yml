@@ -16,27 +16,22 @@ jobs:
         $desktopPath = [System.Environment]::GetFolderPath('Desktop')
         Copy-Item -Path * -Recurse -Destination $desktopPath
 
-    - name: Download and Install Resources
+    - name: Download and Place Resources
       run: |
         # Download Playit Agent
-        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
+        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\Desktop\playit.exe"
         
         # Download Telegram Desktop
         Invoke-WebRequest -Uri "https://telegram.org/dl/desktop/win64" -OutFile "$env:USERPROFILE\Desktop\TelegramSetup.exe"
-        
-        Start-Sleep -Seconds 5  # Give some time for the downloads to complete
 
-    - name: Run Playit Agent
-      env:
-        PLAYIT_AUTH_KEY: ${{ secrets.PL }}
-      run: |
-        # Run Playit Agent with authentication key
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
-
-    - name: Install Telegram Desktop
-      run: |
-        # Install Telegram Desktop (default installer interaction)
-        Start-Process -FilePath "$env:USERPROFILE\Desktop\TelegramSetup.exe" -NoNewWindow -Wait
+        # Create a PowerShell script to install all EXE files on Desktop
+        $script = @"
+        Get-ChildItem -Path "$env:USERPROFILE\Desktop" -Filter *.exe | ForEach-Object {
+            Start-Process -FilePath $_.FullName -ArgumentList '/silent', '/verysilent', '/suppressmsgboxes' -Wait
+        }
+        "@
+        $scriptPath = "$env:USERPROFILE\Desktop\AutoInstall.ps1"
+        $script | Out-File -FilePath $scriptPath -Encoding utf8
 
     - name: Enable Remote Desktop (RDP) and Sound
       run: |
@@ -56,11 +51,24 @@ jobs:
       run: |
         Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "revWS123!" -Force)
 
+    - name: Configure Auto-Startup Script
+      run: |
+        # Move the AutoInstall script to the Windows Startup folder
+        $startupFolder = [Environment]::GetFolderPath('Startup')
+        Copy-Item -Path "$env:USERPROFILE\Desktop\AutoInstall.ps1" -Destination "$startupFolder\AutoInstall.ps1"
+
+        # Allow PowerShell script execution
+        Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy RemoteSigned -Force
+
+        # Schedule the script to run on startup
+        schtasks /create /tn "AutoInstallEXE" /tr "powershell.exe -File $startupFolder\AutoInstall.ps1" /sc onstart /rl highest
+
     - name: Set Up RDP Tunnel
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
+        Start-Process -FilePath "$env:USERPROFILE\Desktop\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
+        Start-Process -FilePath "$env:USERPROFILE\Desktop\playit.exe" -NoNewWindow
 
     # Prevent workflow from stopping
     - name: Keep the GitHub Action Runner Alive
