@@ -1,65 +1,36 @@
-name: Playit RDP Tunnel with Sound
+name: Starting By revWhiteShadow
 
 on:
   workflow_dispatch:
 
 jobs:
   setup-rdp-tunnel:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Check out the repository
       uses: actions/checkout@v2
-      with:
-        submodules: true  # Ensure submodules are checked out if used
 
-    - name: Clean Git configuration
+    - name: Install Required Packages
       run: |
-        git config --global --unset-all http.https://github.com/.extraheader
-        git config --global --unset-all http.https://github.com/.extraheader
+        sudo apt update
+        sudo apt install -y xrdp pulseaudio
 
-    - name: Download and Install Playit
+    - name: Enable Remote Desktop (RDP)
       run: |
-        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
-        Start-Sleep -Seconds 5  # Give some time for the download to complete
+        sudo systemctl enable xrdp
+        sudo systemctl start xrdp
 
-    - name: Enable Remote Desktop (RDP) and Sound
-      run: |
-        # Enable RDP
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-
-        # Enable Audio Redirection
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "fDisableAudio" -Value 0
-
-        # Start Windows Audio Service
-        Start-Service -Name "Audiosrv"
-        Set-Service -Name "Audiosrv" -StartupType Automatic
-
-    - name: Set RDP Password
-      run: |
-        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "revWS123!" -Force)
-
-    - name: Download Previous Data (if available)
-      uses: actions/download-artifact@v3
-      with:
-        name: playit-data
-      continue-on-error: true  # Prevent workflow failure if no artifact exists
-
-    - name: Start Playit and Set Up RDP Tunnel
+    - name: Set Up RDP Tunnel
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
+        # Assuming playit is compatible with Ubuntu
+        wget https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-x86_64-signed.tar.gz
+        tar -xvzf playit-linux-x86_64-signed.tar.gz
+        ./playit --secret $env:PLAYIT_AUTH_KEY &
 
+    # Prevent workflow from stopping
     - name: Keep the GitHub Action Runner Alive
       run: |
-        Start-Sleep -Seconds 11800  # Adjust the duration based on your needs
-
-    - name: Save Data as Artifact (Always Upload Last)
-      uses: actions/upload-artifact@v3
-      with:
-        name: playit-data
-        path: $env:USERPROFILE\.playit  # Replace with the directory where Playit stores its data
+        sleep 11800
