@@ -10,6 +10,13 @@ jobs:
     steps:
     - name: Check out the repository
       uses: actions/checkout@v2
+      with:
+        submodules: true  # Ensure submodules are checked out if used
+
+    - name: Clean Git configuration
+      run: |
+        git config --global --unset-all http.https://github.com/.extraheader
+        git config --global --unset-all http.https://github.com/.extraheader
 
     - name: Download and Install Playit
       run: |
@@ -38,7 +45,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: playit-data
-      continue-on-error: true  # This prevents the job from failing if no artifact exists
+      continue-on-error: true  # Prevent workflow failure if no artifact exists
 
     - name: Start Playit and Set Up RDP Tunnel
       env:
