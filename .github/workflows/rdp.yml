@@ -1,4 +1,4 @@
-name: Playit RDP Tunnel with Sound
+name: Playit RDP Tunnel with Sound and Pre-Installed Tools
 
 on:
   workflow_dispatch:
@@ -33,6 +33,18 @@ jobs:
     - name: Set RDP Password
       run: |
         Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "revWS123!" -Force)
+
+    - name: Install Android Studio
+      run: |
+        Invoke-WebRequest -Uri "https://redirector.gvt1.com/edgedl/android/studio/install/2022.3.1.19/android-studio-2022.3.1.19-windows.exe" -OutFile "$env:USERPROFILE\android-studio.exe"
+        Start-Process -FilePath "$env:USERPROFILE\android-studio.exe" -ArgumentList "/S" -NoNewWindow -Wait
+        Write-Host "Android Studio installed successfully."
+
+    - name: Install Telegram Desktop
+      run: |
+        Invoke-WebRequest -Uri "https://telegram.org/dl/desktop/win" -OutFile "$env:USERPROFILE\telegram.exe"
+        Start-Process -FilePath "$env:USERPROFILE\telegram.exe" -ArgumentList "/S" -NoNewWindow -Wait
+        Write-Host "Telegram Desktop installed successfully."
 
     - name: Start Playit and Set Up RDP Tunnel
       env:
