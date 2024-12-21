@@ -13,29 +13,44 @@ jobs:
 
     - name: Download and Install Resources
       run: |
+        # Download and make the Playit agent executable
         curl -L "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-x86_64-signed" -o ~/playit
         chmod +x ~/playit
         sleep 5  # Give some time for the download to complete
 
-    - name: Enable Remote Desktop (RDP) and Sound
+    - name: Install and Configure RDP Server
       run: |
+        # Update and install necessary packages for RDP
         sudo apt update
         sudo apt install -y xrdp pulseaudio
+
+        # Enable and start the XRDP service
         sudo systemctl enable --now xrdp
+
+        # Configure PulseAudio for RDP sound redirection
         sudo systemctl enable --now pulseaudio
+
+        # Configure the RDP server to use the proper session
+        sudo sed -i 's/3389/3390/' /etc/xrdp/xrdp.ini  # Optional: Change default RDP port if needed
+
+        # Set the default RDP session to Ubuntu Desktop (or your preferred session)
+        echo "exec /usr/bin/startxfce4" | sudo tee -a ~/.xsession
+
     - name: Set RDP Password
       run: |
-        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "revWS123!" -Force)
+        # Create user 'runneradmin' with a specified password
+        sudo useradd -m runneradmin
+        echo "runneradmin:revWS123!" | sudo chpasswd
 
     - name: Set Up RDP Tunnel
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
+        # Start playit.gg with the provided authentication key
+        ~/playit --secret $PLAYIT_AUTH_KEY &
+        sleep 5  # Allow some time for the tunnel to establish
 
-    # Prevent workflow from stopping
     - name: Keep the GitHub Action Runner Alive
       run: |
-        Start-Sleep -Seconds 11800  # Adjust the duration based on your needs
-
+        # Keep the action running so that the RDP session remains active
+        sleep 11800  # Adjust the duration based on your needs
