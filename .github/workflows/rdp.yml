@@ -11,18 +11,10 @@ jobs:
     - name: Check out the repository
       uses: actions/checkout@v2
 
-    - name: Copy repository files to Desktop, excluding .github
+    - name: Copy repository files to Desktop
       run: |
         $desktopPath = [System.Environment]::GetFolderPath('Desktop')
-        
-        # Copy all files except .github directory
-        Get-ChildItem -Recurse -Exclude .github | ForEach-Object {
-            if ($_ -is [System.IO.DirectoryInfo]) {
-                Copy-Item -Path $_.FullName -Destination "$desktopPath\$_" -Recurse
-            } else {
-                Copy-Item -Path $_.FullName -Destination "$desktopPath\$_"
-            }
-        }
+        Copy-Item -Path * -Recurse -Destination $desktopPath
 
     - name: Download and Install Resources
       run: |
