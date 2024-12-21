@@ -23,20 +23,19 @@ jobs:
         sudo apt install -y xrdp pulseaudio
         sudo systemctl enable --now xrdp
         sudo systemctl enable --now pulseaudio
-
     - name: Set RDP Password
       run: |
-        sudo useradd -m runneradmin
-        echo "runneradmin:revWS123!" | sudo chpasswd
+        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "revWS123!" -Force)
 
     - name: Set Up RDP Tunnel
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
-        ~/playit --secret $PLAYIT_AUTH_KEY &
-        sleep 5  # Allow some time for the tunnel to start
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
 
     # Prevent workflow from stopping
     - name: Keep the GitHub Action Runner Alive
       run: |
-        sleep 11800  # Adjust the duration based on your needs
+        Start-Sleep -Seconds 11800  # Adjust the duration based on your needs
+
