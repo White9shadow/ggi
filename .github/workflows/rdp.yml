@@ -11,6 +11,11 @@ jobs:
     - name: Check out the repository
       uses: actions/checkout@v2
 
+    - name: Copy repository files to Desktop
+      run: |
+        $desktopPath = [System.Environment]::GetFolderPath('Desktop')
+        Copy-Item -Path * -Recurse -Destination $desktopPath
+
     - name: Download and Install Resources
       run: |
         Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
