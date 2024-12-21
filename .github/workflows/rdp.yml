@@ -11,16 +11,6 @@ jobs:
     - name: Check out the repository
       uses: actions/checkout@v2
 
-    - name: Restore Playit Config Cache
-      id: cache-playit
-      uses: actions/cache@v3
-      with:
-        path: |
-          $env:USERPROFILE\.playit
-        key: playit-config-${{ github.run_id }}
-        restore-keys: |
-          playit-config-
-
     - name: Download and Install Playit
       run: |
         Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
@@ -48,20 +38,8 @@ jobs:
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
-        # Ensure Playit directory exists
-        if (-Not (Test-Path "$env:USERPROFILE\.playit")) {
-          mkdir "$env:USERPROFILE\.playit"
-        }
-
-        # Start Playit with session
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY --config-path $env:USERPROFILE\.playit\config.yaml" -NoNewWindow -Wait
-
-    - name: Cache Playit Config
-      uses: actions/cache@v3
-      with:
-        path: |
-          $env:USERPROFILE\.playit
-        key: playit-config-${{ github.run_id }}
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
 
     # Prevent workflow from stopping
     - name: Keep the GitHub Action Runner Alive
